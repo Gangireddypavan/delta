@@ -1,0 +1,57 @@
+const express = require("express");
+const app = express();
+const users =require("./routes/user.js");
+const posts =require("./routes/post.js");
+const session = require("express-session");
+
+app.use(session(sessionuptions));
+
+app.get("/test",(req,res)=>{
+    res.send("test successful! ");
+})
+
+app.get("/register",(req,res)=>{
+    let {name = "anonymous"} =req.query;
+    req.session.name = name;
+    req.flash("success","user registered successfully!");
+    res.redirect("/hello");
+})
+
+app.get("/hello",(req,res)=>{
+    res.locals.
+})
+
+const cookieParser =require("cookie-parser");
+
+app.use(cookieParser("secretcode"));
+
+app.get("/getsignedcookie",(req, res)=>{
+res.cookie("made-in", "India",{signed:true});
+res.send("signed cookie sent");
+})
+app.get("/verify",(req, res)=>{
+console.log(req.signedCookies);
+res.send("verified");
+});
+app.get("/getcookies",(req, res)=>{
+res.cookie("made-in", "India",{signed:true});
+})
+
+app.get("/getcookies",(req, res)=>{
+    res.cookie("greet","hello");
+    res.cookie("made-in", "India");
+    res.send("sent you some cookies");
+});
+
+app.get("/",(req,res)=>{
+    console.dir(req.cookies);
+    res.send("Hi, I am root!");
+});
+
+app.use("/users",users);
+app.use("/posts",posts);
+
+
+app.listen(3000, ()=>{
+    console.log("server is listening to 3000")
+}); 
