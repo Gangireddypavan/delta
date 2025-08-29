@@ -8,7 +8,7 @@ const express = require("express");
 const router =express.Router();
 const app = express();
 const mongoose = require("mongoose") ;
-const Listing =require("./models/listing") 
+const listing =require("./models/listing") 
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
@@ -23,7 +23,7 @@ const User =require("./models/user.js");
 const listingRouter =require("./routes/listing.js")
 const reviewRouter =require("./routes/review.js");
 const userRouter =require("./routes/user.js");
-// const { ServerClosedEvent } = require("mongodb");
+const MongoStore =require("connect-mongo");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust"; 
 
@@ -56,7 +56,7 @@ app.use(express.static("public"));
 //   },touchAfter: 24 * 3600,
 // });
 
-// Store.on("error",()=>{
+// store.on("error",()=>{
 //   console.log("ERROR in MONGO SESSION STORE", err)
 // });
 

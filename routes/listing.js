@@ -11,7 +11,6 @@ const multer =require('multer');
 const {storage} =require("../cloudConfig.js")
 const upload = multer({storage});
 
-
 // // Validate listing data
 const validateListing = (req, res, next) => {
   const { error } = listingSchema.validate(req.body.listing);
@@ -41,7 +40,5 @@ router.route("/:id")
 
 // //Edit Route
 router.get("/:id/edit",isLoggedIn,wrapAsync( listingController.renderEditForm));
-
-
 
 module.exports = router;
