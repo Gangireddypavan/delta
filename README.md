@@ -1,1 +1,1 @@
-run nodemon app.js
+run: nodemon app.js
