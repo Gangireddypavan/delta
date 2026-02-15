@@ -69,8 +69,13 @@ main()
       },
     };
 
+
     app.use(session(sessionOptions));
     app.use(flash());
+
+    app.get("/", (req, res) => {
+      res.send("Hi I am root ");
+    });
 
     // PASSPORT CONFIG
     app.use(passport.initialize());
