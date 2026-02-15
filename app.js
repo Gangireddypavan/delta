@@ -1,118 +1,126 @@
-if (process.env.NODE_ENV != "production") {
-  require('dotenv').config()
-
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
 }
-// console.log(process.env.secret)
 
 const express = require("express");
-const router = express.Router();
 const app = express();
 const mongoose = require("mongoose");
-const listing = require("./models/listing")
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
-const wrapAsync = require("./utils/wrapAsync.js");
-const ExpressError = require("./utils/ExpressError.js");
-const { listingSchema, reviewSchema } = require("./schema.js");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
-const User = require("./models/user.js");
-
-const listingRouter = require("./routes/listing.js")
-const reviewRouter = require("./routes/review.js");
-const userRouter = require("./routes/user.js");
+const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
-const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
+const ExpressError = require("./utils/ExpressError.js");
 
+// Environment Variables
+const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
+const port = 8080;
+
+// 1. Database Connection Logic
 async function main() {
+  // Prevent Mongoose buffering timeout errors by ensuring we connect before operations
+  // and setting proper options if needed (though connect() is the primary fix)
   await mongoose.connect(dbUrl);
 }
 
-// const dbUrl =process.env.ATLASDB_URL;
+// 2. Add connection error listener
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB connection error:", err);
+});
 
-// async function main() {  
-//     await mongoose.connect(dbUrl);
-// }
-
+// 3. Start Connection and then Server
 main()
-  .then(() => console.log("Connected to DB"))
-  .catch(err => console.log(err));
+  .then(() => {
+    console.log("Connected to MongoDB successfully");
 
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(methodOverride("_method"));
-app.engine('ejs', ejsMate);
-app.use(express.static(path.join(__dirname, "/public")));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+    // MODELS (Imported after connection setup as requested)
+    const User = require("./models/user.js");
 
-// const store =MongoStore.create({
-//   mongoUrl:dbUrl,
-//   crypto:{
-//     secret:process.env.SECRET,
-//   },touchAfter: 24 * 3600,
-// });
+    // MIDDLEWARE & CONFIG
+    app.set("view engine", "ejs");
+    app.set("views", path.join(__dirname, "views"));
+    app.engine("ejs", ejsMate);
 
-// store.on("error",()=>{
-//   console.log("ERROR in MONGO SESSION STORE", err)
-// });
+    app.use(express.urlencoded({ extended: true }));
+    app.use(methodOverride("_method"));
+    app.use(express.static(path.join(__dirname, "/public")));
 
-const session = require("express-session")
-const sessionOptions = {
-  secret: process.env.SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7
-  }
-};
+    const sessionOptions = {
+      secret: process.env.SECRET || "mysupersecretcode",
+      resave: false,
+      saveUninitialized: true,
+      store: MongoStore.create({
+        mongoUrl: dbUrl,
+        crypto: {
+          secret: process.env.SECRET || "mysupersecretcode",
+        },
+        touchAfter: 24 * 3600,
+      }),
+      cookie: {
+        httpOnly: true,
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+      },
+    };
 
-app.get("/", (req, res) => {
-  res.redirect("/listings");
-});
+    app.use(session(sessionOptions));
+    app.use(flash());
 
-app.use(session(sessionOptions));
-app.use(flash());
+    // PASSPORT CONFIG
+    app.use(passport.initialize());
+    app.use(passport.session());
+    passport.use(new LocalStrategy(User.authenticate()));
+    passport.serializeUser(User.serializeUser());
+    passport.deserializeUser(User.deserializeUser());
 
-app.use(passport.initialize());
-app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()))
+    // Flash Middleware
+    app.use((req, res, next) => {
+      res.locals.success = req.flash("success");
+      res.locals.error = req.flash("error");
+      res.locals.currUser = req.user;
+      next();
+    });
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+    // ROUTES
+    const listingRouter = require("./routes/listing.js");
+    const reviewRouter = require("./routes/review.js");
+    const userRouter = require("./routes/user.js");
 
-app.use((req, res, next) => {
-  res.locals.success = req.flash("success");
-  res.locals.error = req.flash("error");
-  res.locals.currUser = req.user;
-  next();
-});
+    app.get("/", (req, res) => {
+      res.redirect("/listings");
+    });
 
-app.use("/listings", listingRouter);
-app.use("/listings/:id/reviews", reviewRouter);
-app.use("/", userRouter);
+    app.use("/listings", listingRouter);
+    app.use("/listings/:id/reviews", reviewRouter);
+    app.use("/", userRouter);
 
-app.use((req, res, next) => {
-  next(new ExpressError(404, "Page Not Found!"));
-});
+    // 404 Route
+    app.all("*", (req, res, next) => {
+      next(new ExpressError(404, "Page Not Found!"));
+    });
 
-app.use((err, req, res, next) => {
-  if (res.headersSent) {
-    console.error("Error occurred after headers were sent:", err);
-    return;
-  }
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Something went wrong";
-  res.status(statusCode).render("error.ejs", { err: { status: statusCode, message } });
-});
+    // Error Handling Middleware
+    app.use((err, req, res, next) => {
+      if (res.headersSent) {
+        return next(err);
+      }
+      const { statusCode = 500, message = "Something went wrong" } = err;
+      res.status(statusCode).render("error.ejs", { err: { status: statusCode, message } });
+    });
 
-app.listen(8080, () => {
-  console.log("server is listening to port 8080");
-});
+    // START SERVER
+    app.listen(port, () => {
+      console.log(`Server is listening on port ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err);
+    process.exit(1);
+  });
 
 
 
