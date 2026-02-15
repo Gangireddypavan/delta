@@ -97,7 +97,8 @@
         <div class="col">
           <a href="/listings/<%= listing._id %>" class="listing-link">
             <div class="card listing-card">
-              <img src="<%= listing.image.url || 'https://via.placeholder.com/300x200?text=No+Image' %>"
+              <img
+                src="<%= (typeof listing.image === 'string' ? listing.image : (listing.image && listing.image.url)) || 'https://via.placeholder.com/300x200?text=No+Image' %>"
                 class="card-img-top" alt="listing image" style="height: 20rem" />
               <div class="card-img-overlay"></div>
               <div class="card-body">
