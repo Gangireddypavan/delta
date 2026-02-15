@@ -49,7 +49,7 @@ main()
 
     app.use(express.urlencoded({ extended: true }));
     app.use(methodOverride("_method"));
-    app.use(express.static(path.join(__dirname, "/public")));
+    app.use(express.static(path.join(__dirname, "public")));
 
     const sessionOptions = {
       secret: process.env.SECRET || "mysupersecretcode",
@@ -73,9 +73,6 @@ main()
     app.use(session(sessionOptions));
     app.use(flash());
 
-    app.get("/", (req, res) => {
-      res.send("Hi I am root ");
-    });
 
     // PASSPORT CONFIG
     app.use(passport.initialize());
@@ -105,8 +102,8 @@ main()
     app.use("/listings/:id/reviews", reviewRouter);
     app.use("/", userRouter);
 
-    // 404 Route
-    app.all("*", (req, res, next) => {
+    // 404 Route (Fixed for Express 5 compatibility)
+    app.use((req, res, next) => {
       next(new ExpressError(404, "Page Not Found!"));
     });
 

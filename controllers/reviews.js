@@ -1,7 +1,7 @@
-const Listing =require("../models/listing");
-const Review =require("../models/review");
+const Listing = require("../models/listing");
+const Review = require("../models/review");
 
-module.exports.createReview =async (req, res, next) => {
+module.exports.createReview = async (req, res, next) => {
     try {
         console.log(req.params.id);
         let listing = await Listing.findById(req.params.id);
@@ -14,13 +14,15 @@ module.exports.createReview =async (req, res, next) => {
     } catch (e) {
 
         next(e);
-    }};
+    }
+};
 
-module.exports.destroyReview =async(req,res)=>{
-        let { id,reviewId}= req.params;
-        await listing.findByIdAndUpdate(id,{$pull:{review:reviewId}});
-        await Review.findByIdAndDelete(reviewId);
+module.exports.destroyReview = async (req, res) => {
+    let { id, reviewId } = req.params;
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
 
-        res.redirect(`/listings/${id}`);
-    };
+    await Review.findByIdAndDelete(reviewId);
+
+    res.redirect(`/listings/${id}`);
+};
 

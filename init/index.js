@@ -1,6 +1,8 @@
+const path = require("path");
 if (process.env.NODE_ENV != "production") {
-  require('dotenv').config({ path: '../.env' });
+  require('dotenv').config({ path: path.join(__dirname, "../.env") });
 }
+
 
 const mongoose = require("mongoose");
 const initData = require("./data.js");
@@ -22,13 +24,21 @@ async function main() {
 
 const initDB = async () => {
   try {
-    await Listing.deleteMany({});  // Empty object to delete all documents
-    await Listing.insertMany(initData.data);
-    console.log("data was initialized");
+    await Listing.deleteMany({});
+    const ownerId = "652d0081ae547c5d37e56b5f";
+    const enrichedData = initData.data.map((obj) => ({
+      ...obj,
+      owner: ownerId,
+    }));
+    await Listing.insertMany(enrichedData);
+    console.log("Data was initialized successfully");
   } catch (err) {
     console.error("Initialization error:", err);
   }
 };
 
-initDB();
 
+
+initDB().then(() => {
+  mongoose.connection.close();
+});

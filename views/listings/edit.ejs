@@ -3,7 +3,13 @@
     <div class="row mt-3">
         <div class="col-8 offset-2 col-md-6 offset-md-3 glass-form">
             <h3 class="text-center mb-4">Edit Price</h3>
-            <form action="/listings/<%= listing._id %>?_method=PUT" method="POST" novalidate class="needs-validation">
+            <form action="/listings/<%= listing._id %>?_method=PUT" method="POST" enctype="multipart/form-data"
+                novalidate class="needs-validation">
+                <div class="mb-4">
+                    <label for="image" class="form-label">Update Image</label>
+                    <input name="listing[image]" type="file" class="form-control">
+                </div>
+
                 <div class="mb-4">
                     <label for="price" class="form-label">Update Price (₹)</label>
                     <input name="listing[price]" value="<%= listing.price %>" type="number" class="form-control"
@@ -15,5 +21,6 @@
                 <a href="/listings/<%= listing._id %>"
                     class="btn btn-secondary mt-3 d-block text-center glass-back-btn">Cancel</a>
             </form>
+
         </div>
     </div>
