@@ -18,7 +18,9 @@ const ExpressError = require("./utils/ExpressError.js");
 
 // Environment Variables
 const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
-const port = 8080;
+// const port = 8080;
+const port = process.env.PORT || 8080;
+
 
 // 1. Database Connection Logic
 async function main() {
