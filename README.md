@@ -1,3 +1,4 @@
+
 # Wanderlust
 
 Wanderlust is a full-stack web application that allows users to list, discover, and book unique accommodations around the world. Inspired by Airbnb, it features a robust listing management system, user reviews, and secure authentication.
